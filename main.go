@@ -13,7 +13,7 @@ import (
 
 const Dp1PinNumber = 22
 const Dp2PinNumber = 23
-const UsbPinNumber = 23
+const UsbPinNumber = 24
 const ImageDir = "images"
 
 func main() {
