@@ -103,9 +103,9 @@ func initStreamdeck() {
 
 	fmt.Printf("Found device [%s]\n", sd.GetName())
 
-	sd.AddButton(0, initImageToggleButton("monitor.jpg", func() { blinkGpioPin(Dp1PinNumber)} ))
+	sd.AddButton(0, initImageToggleButton("monitor.jpg", func() { blinkGpioPin(Dp2PinNumber)} ))
 	sd.AddButton(1, initImageToggleButton("keyboard.jpg", func() { blinkGpioPin(UsbPinNumber)} ))
-	sd.AddButton(3, initImageToggleButton("monitor.jpg", func() { blinkGpioPin(Dp2PinNumber)} ))
+	sd.AddButton(3, initImageToggleButton("monitor.jpg", func() { blinkGpioPin(Dp1PinNumber)} ))
 	sd.AddButton(4, initImageToggleButton("all.jpg", func() {
 		blinkGpioPin(Dp1PinNumber)
 		blinkGpioPin(Dp2PinNumber)
