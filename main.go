@@ -9,12 +9,34 @@ import (
 	streamdeck "github.com/magicmonkey/go-streamdeck"
 	"github.com/magicmonkey/go-streamdeck/buttons"
 	_ "github.com/magicmonkey/go-streamdeck/devices"
+	"github.com/stianeikeland/go-rpio"
 )
+
+const UsbPinNumber = 22
 
 func main() {
 	initStreamdeck()
+	initGpio()
 
 	time.Sleep(6000 * time.Second)
+}
+
+func initGpio() {
+	err := rpio.Open()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func blinkGpioPin(pinNumber int) {
+	pin := rpio.Pin(pinNumber)
+
+	println("Blinking", pin)
+
+	pin.Output()
+	pin.High()
+	time.Sleep(time.Millisecond * 200)
+	pin.Low()
 }
 
 func initStreamdeck() {
@@ -44,7 +66,8 @@ func initStreamdeck() {
 	if err != nil {
 		fmt.Printf("Failure [${err}]")
 	} else {
-		kbButton.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { http.Get("http://192.168.18.28:8080/usb1") }))
+//		kbButton.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { http.Get("http://192.168.18.28:8080/usb1") }))
+		kbButton.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { blinkGpioPin(UsbPinNumber)}))
 		sd.AddButton(1, kbButton)
 	}
 
