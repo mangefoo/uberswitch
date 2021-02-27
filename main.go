@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/magicmonkey/go-streamdeck/actionhandlers"
 	"image/color"
@@ -24,9 +25,25 @@ const ImageDir = "images"
 const HttpListenAddr = ":8080"
 
 func main() {
-	initStreamdeck()
-	initGpio()
-	httpServer()
+
+	reset := flag.Bool("reset", false, "Reset the Stream Deck")
+
+	if *reset {
+		fmt.Print("Resetting Stream Deck")
+		resetStreamdeck()
+	} else {
+		initGpio()
+		initStreamdeck()
+		httpServer()
+	}
+}
+
+func resetStreamdeck() {
+	sd, err := streamdeck.Open()
+	if err != nil {
+		panic(err)
+	}
+	sd.ResetComms()
 }
 
 func handleSignals(sd *streamdeck.StreamDeck) {
