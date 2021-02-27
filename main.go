@@ -3,8 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/magicmonkey/go-streamdeck/actionhandlers"
+	"image/color"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	streamdeck "github.com/magicmonkey/go-streamdeck"
@@ -23,6 +27,20 @@ func main() {
 	initStreamdeck()
 	initGpio()
 	httpServer()
+}
+
+func handleSignals(sd *streamdeck.StreamDeck) {
+    c := make(chan os.Signal, 1)
+    signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGTERM)
+
+    <-c
+
+    blackButton := buttons.NewColourButton(color.Black)
+    for i := 0; i < 6; i++ {
+		sd.AddButton(i, blackButton)
+	}
+
+    os.Exit(0)
 }
 
 func httpServer() {
@@ -93,4 +111,6 @@ func initStreamdeck() {
 		blinkGpioPin(Dp2PinNumber)
 		blinkGpioPin(UsbPinNumber)
 	} ))
+
+	handleSignals(sd)
 }
