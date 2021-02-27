@@ -41,7 +41,7 @@ func blinkGpioPin(pinNumber int) {
 }
 
 func imagePath(image string) string {
-	return fmt.Sprintf("%s/all.jpg", ImageDir)
+	return fmt.Sprintf("%s/%s", ImageDir, image)
 }
 
 func initStreamdeck() {
