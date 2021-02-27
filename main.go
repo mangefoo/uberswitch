@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/magicmonkey/go-streamdeck/actionhandlers"
+	"log"
+	"net/http"
 	"time"
 
 	streamdeck "github.com/magicmonkey/go-streamdeck"
@@ -15,12 +17,33 @@ const Dp1PinNumber = 22
 const Dp2PinNumber = 23
 const UsbPinNumber = 24
 const ImageDir = "images"
+const HttpListenAddr = ":8080"
 
 func main() {
 	initStreamdeck()
 	initGpio()
 
-	time.Sleep(6000 * time.Second)
+	httpServer()
+}
+
+func httpServer() {
+	fmt.Printf("Starting server at %s\n", HttpListenAddr)
+
+	http.HandleFunc("/usb1", blinkPinFunction(UsbPinNumber))
+	http.HandleFunc("/dp1", blinkPinFunction(Dp1PinNumber))
+	http.HandleFunc("/dp2", blinkPinFunction(Dp2PinNumber))
+
+    if err := http.ListenAndServe(HttpListenAddr, nil); err != nil {
+        log.Fatal(err)
+    }
+}
+
+func blinkPinFunction(pin int) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		println("Blinking pin", pin)
+		blinkGpioPin(pin)
+		w.WriteHeader(201)
+	}
 }
 
 func initGpio() {
