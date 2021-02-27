@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/magicmonkey/go-streamdeck/actionhandlers"
-	"net/http"
 	"time"
 
 	streamdeck "github.com/magicmonkey/go-streamdeck"
@@ -12,7 +11,9 @@ import (
 	"github.com/stianeikeland/go-rpio"
 )
 
-const UsbPinNumber = 22
+const Dp1PinNumber = 22
+const Dp2PinNumber = 23
+const UsbPinNumber = 23
 const ImageDir = "images"
 
 func main() {
@@ -55,7 +56,7 @@ func initStreamdeck() {
 	if err != nil {
 		fmt.Printf("Failure [${err}]")
 	} else {
-		dp1Button.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { http.Get("http://192.168.18.28:8080/dp1") }))
+		dp1Button.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { blinkGpioPin(Dp1PinNumber)}))
 		sd.AddButton(3, dp1Button)
 	}
 
@@ -63,7 +64,7 @@ func initStreamdeck() {
 	if err != nil {
 		fmt.Printf("Failure [${err}]")
 	} else {
-		dp2Button.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { http.Get("http://192.168.18.28:8080/dp2") }))
+		dp2Button.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { blinkGpioPin(Dp2PinNumber)}))
 		sd.AddButton(0, dp2Button)
 	}
 
@@ -71,7 +72,6 @@ func initStreamdeck() {
 	if err != nil {
 		fmt.Printf("Failure [${err}]")
 	} else {
-//		kbButton.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { http.Get("http://192.168.18.28:8080/usb1") }))
 		kbButton.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { blinkGpioPin(UsbPinNumber)}))
 		sd.AddButton(1, kbButton)
 	}
@@ -81,9 +81,9 @@ func initStreamdeck() {
 		fmt.Printf("Failure [${err}]")
 	} else {
 		allButton.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) {
-			http.Get("http://192.168.18.28:8080/dp1")
-			http.Get("http://192.168.18.28:8080/dp2")
-			http.Get("http://192.168.18.28:8080/usb1")
+			blinkGpioPin(Dp1PinNumber)
+			blinkGpioPin(Dp2PinNumber)
+			blinkGpioPin(UsbPinNumber)
 		}))
 		sd.AddButton(4, allButton)
 	}
