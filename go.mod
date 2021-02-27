@@ -1,4 +1,4 @@
-module mindphaser.se/ubserswitch
+module mindphaser.se/uberswitch
 
 go 1.13
 
