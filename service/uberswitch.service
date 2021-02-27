@@ -1,0 +1,26 @@
+[Unit]
+Description=Uberswitch service
+ConditionPathExists=/home/pi/devel/uberswitch/uberswitch
+After=network.target
+ 
+[Service]
+Type=simple
+User=uberswitch
+Group=uberswitch
+LimitNOFILE=1024
+
+Restart=on-failure
+RestartSec=10
+startLimitIntervalSec=60
+
+WorkingDirectory=/home/pi/devel/uberswitch
+ExecStart=/home/pi/devel/uberswitch/uberswitch
+
+PermissionsStartOnly=true
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=uberswitch
+ 
+[Install]
+WantedBy=multi-user.target
+
