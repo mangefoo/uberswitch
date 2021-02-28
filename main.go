@@ -24,17 +24,22 @@ const UsbPinNumber = 24
 const ImageDir = "images"
 const HttpListenAddr = ":8080"
 
+var syncState = false
+
 func main() {
 
 	reset := flag.Bool("r", false, "Reset the Stream Deck")
+	noHardware := flag.Bool("n", false, "Run without Stream Deck and GPIO support")
 	flag.Parse()
 
 	if *reset {
 		fmt.Println("Resetting Stream Deck")
 		resetStreamdeck()
 	} else {
-		initGpio()
-		initStreamdeck()
+		if !*noHardware {
+			initGpio()
+			initStreamdeck()
+		}
 		httpServer()
 	}
 }
@@ -130,5 +135,24 @@ func initStreamdeck() {
 		blinkGpioPin(UsbPinNumber)
 	} ))
 
+	setSyncButton("sync-blue-on-black.jpg", "sync-blue-on-red.jpg")
+
 	go handleSignals(sd)
+}
+
+func setSyncButton(noSyncImage string, syncImage string) {
+
+	var image = noSyncImage
+	if syncState {
+		image = syncImage
+	}
+
+	syncButton, err := buttons.NewImageFileButton(imagePath(image))
+	if err != nil {
+		panic(err)
+	}
+	syncButton.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) {
+		syncState = !syncState
+		setSyncButton(noSyncImage, syncImage)
+	}))
 }
