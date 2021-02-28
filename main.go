@@ -255,7 +255,7 @@ type PhilipHueState struct {
 	Lastupdated string
 }
 
-type PhilipHueResponse struct {
+type PhilipsHueResponse struct {
 	State PhilipHueState
 }
 
@@ -272,7 +272,7 @@ func pollMotionSensor(function func(bool)) {
 		} else if response.StatusCode != 200 {
 			fmt.Println("Unexpected response:", response.StatusCode, response.Status)
 		} else {
-			hueResponse := new(PhilipHueResponse)
+			hueResponse := new(PhilipsHueResponse)
 			json.NewDecoder(response.Body).Decode(hueResponse)
 
 			now := time.Now()
