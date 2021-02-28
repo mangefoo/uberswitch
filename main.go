@@ -130,5 +130,5 @@ func initStreamdeck() {
 		blinkGpioPin(UsbPinNumber)
 	} ))
 
-	handleSignals(sd)
+	go handleSignals(sd)
 }
