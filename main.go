@@ -265,7 +265,6 @@ func pollMotionSensor(function func(bool)) {
 	var presenceFalseSent = false
 
 	for {
-		println("Polling Philips Hue from", config.PhilipsHueSensorUrl)
 		response, err := http.Get(config.PhilipsHueSensorUrl)
 		if err != nil {
 			fmt.Println(err)
