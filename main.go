@@ -157,9 +157,9 @@ func initStreamdeck() {
 
 	fmt.Printf("Found device [%s]\n", sd.GetName())
 
-	initImageToggleButton(sd, Dp2ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { blinkGpioPin(Dp2PinNumber)} )
-	initImageToggleButton(sd, Dp1ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { blinkGpioPin(Dp1PinNumber)} )
-	initImageToggleButton(sd, UsbButtonIndex, []string{"keyboard-apple.jpg", "keyboard-linux.jpg"}, func() { blinkGpioPin(UsbPinNumber)} )
+	initImageToggleButton(sd, Dp2ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { go blinkGpioPin(Dp2PinNumber)} )
+	initImageToggleButton(sd, Dp1ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { go blinkGpioPin(Dp1PinNumber)} )
+	initImageToggleButton(sd, UsbButtonIndex, []string{"keyboard-apple.jpg", "keyboard-linux.jpg"}, func() { go blinkGpioPin(UsbPinNumber)} )
 	initImageToggleButton(sd, AllButtonIndex, []string{"all.jpg"}, func() {
 		sd.GetButtonIndex(Dp1ButtonIndex).Pressed()
 		sd.GetButtonIndex(Dp2ButtonIndex).Pressed()
