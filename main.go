@@ -114,14 +114,39 @@ func imagePath(image string) string {
 	return fmt.Sprintf("%s/%s", ImageDir, image)
 }
 
-func initImageToggleButton(image string, function func()) *buttons.ImageFileButton {
-	button, err := buttons.NewImageFileButton(imagePath(image))
+func initImageToggleButton(sd *streamdeck.StreamDeck, buttonIndex int, images []string, function func()) {
+
+	buttonState := ButtonState{ buttonIndex, images, 0 }
+
+	setImageToggleButton(sd, buttonState, function)
+}
+
+func setImageToggleButton(sd *streamdeck.StreamDeck, buttonState ButtonState, function func()) {
+
+	button, err := buttons.NewImageFileButton(imagePath(buttonState.images[buttonState.imageIndex]))
 	if err != nil {
 		panic(err)
 	}
 
-	button.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { function() }))
-	return button
+	button.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) {
+		buttonState.imageIndex++
+		if buttonState.imageIndex >= len(buttonState.images) {
+			buttonState.imageIndex = 0
+		}
+
+		setImageToggleButton(sd, buttonState, function)
+		if !syncState {
+			function()
+		}
+	}))
+
+	sd.AddButton(buttonState.buttonIndex, button)
+}
+
+type ButtonState struct {
+	buttonIndex int
+	images []string
+	imageIndex int
 }
 
 func initStreamdeck() {
@@ -132,14 +157,14 @@ func initStreamdeck() {
 
 	fmt.Printf("Found device [%s]\n", sd.GetName())
 
-	sd.AddButton(Dp2ButtonIndex, initImageToggleButton("monitor.jpg", func() { blinkGpioPin(Dp2PinNumber)} ))
-	sd.AddButton(UsbButtonIndex, initImageToggleButton("keyboard.jpg", func() { blinkGpioPin(UsbPinNumber)} ))
-	sd.AddButton(Dp1ButtonIndex, initImageToggleButton("monitor.jpg", func() { blinkGpioPin(Dp1PinNumber)} ))
-	sd.AddButton(AllButtonIndex, initImageToggleButton("all.jpg", func() {
+	initImageToggleButton(sd, Dp2ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { blinkGpioPin(Dp2PinNumber)} )
+	initImageToggleButton(sd, Dp1ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { blinkGpioPin(Dp1PinNumber)} )
+	initImageToggleButton(sd, UsbButtonIndex, []string{"keyboard.jpg"}, func() { blinkGpioPin(UsbPinNumber)} )
+	initImageToggleButton(sd, AllButtonIndex, []string{"all.jpg"}, func() {
 		blinkGpioPin(Dp1PinNumber)
 		blinkGpioPin(Dp2PinNumber)
 		blinkGpioPin(UsbPinNumber)
-	} ))
+	})
 
 	setSyncButton(sd, "sync-blue-on-black.jpg", "sync-blue-on-red.jpg")
 
