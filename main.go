@@ -67,7 +67,7 @@ func main() {
 					initStreamDeckButtons(sd)
 				} else {
 					println("Turning display off")
-					clearStreamDeckButtons(sd)
+					clearStreamDeckButtons(sd, func() { initStreamDeckButtons(sd) })
 				}
 			}
 		})
@@ -106,13 +106,14 @@ func handleSignals(sd *streamdeck.StreamDeck) {
 
 	<-c
 
-	clearStreamDeckButtons(sd)
+	clearStreamDeckButtons(sd, func() {})
 
 	os.Exit(0)
 }
 
-func clearStreamDeckButtons(sd *streamdeck.StreamDeck) {
+func clearStreamDeckButtons(sd *streamdeck.StreamDeck, pressFunction func()) {
 	blackButton := buttons.NewColourButton(color.Black)
+	blackButton.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { pressFunction() }))
 	for i := 0; i < 6; i++ {
 		sd.AddButton(i, blackButton)
 	}
@@ -286,7 +287,6 @@ func pollMotionSensor(function func(bool)) {
 				presenceFalseSent = true
 			} else if !lastPresence && hueResponse.State.Presence && presenceFalseSent {
 				println("Sending presence true to consumer")
-				function(false)
 				function(true)
 				presenceFalseSent = false
 			}
