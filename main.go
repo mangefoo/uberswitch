@@ -61,12 +61,12 @@ func main() {
 		}
 
 		initMotionSensor(func(presence bool) {
-			println("Presence:", presence)
-
 			if sd != nil {
 				if presence {
+					println("Turning display on")
 					initStreamDeckButtons(sd)
 				} else {
+					println("Turning display off")
 					clearStreamDeckButtons(sd)
 				}
 			}
