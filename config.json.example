@@ -1,0 +1,4 @@
+{
+  "philipsHueSensorUrl": "http://127.0.0.1/api/<APIKEY>/sensors/19",
+  "motionSensorThresholdSecs": 600
+}
