@@ -278,12 +278,16 @@ func pollMotionSensor(function func(bool)) {
 			now := time.Now()
 
 			if lastPresence && !hueResponse.State.Presence {
+				println("Resetting lastPresenceToFalseChange")
 				lastPresenceToFalseChange = time.Now()
 				presenceFalseSent = false
 			} else if !hueResponse.State.Presence && !lastPresence && !presenceFalseSent && now.Sub(lastPresenceToFalseChange) > time.Second * time.Duration(config.MotionSensorThresholdSecs) {
+				println("Sending presence false to consumer")
 				function(false)
 				presenceFalseSent = true
 			} else if !lastPresence && hueResponse.State.Presence && presenceFalseSent {
+				println("Sending presence true to consumer")
+				function(false)
 				function(true)
 				presenceFalseSent = false
 			}
