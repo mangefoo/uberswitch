@@ -24,6 +24,12 @@ const UsbPinNumber = 24
 const ImageDir = "images"
 const HttpListenAddr = ":8080"
 
+const Dp2ButtonIndex = 0
+const UsbButtonIndex = 1
+const SyncButtonIndex = 2
+const Dp1ButtonIndex = 3
+const AllButtonIndex = 4
+
 var syncState = false
 
 func main() {
@@ -126,21 +132,21 @@ func initStreamdeck() {
 
 	fmt.Printf("Found device [%s]\n", sd.GetName())
 
-	sd.AddButton(0, initImageToggleButton("monitor.jpg", func() { blinkGpioPin(Dp2PinNumber)} ))
-	sd.AddButton(1, initImageToggleButton("keyboard.jpg", func() { blinkGpioPin(UsbPinNumber)} ))
-	sd.AddButton(3, initImageToggleButton("monitor.jpg", func() { blinkGpioPin(Dp1PinNumber)} ))
-	sd.AddButton(4, initImageToggleButton("all.jpg", func() {
+	sd.AddButton(Dp2ButtonIndex, initImageToggleButton("monitor.jpg", func() { blinkGpioPin(Dp2PinNumber)} ))
+	sd.AddButton(UsbButtonIndex, initImageToggleButton("keyboard.jpg", func() { blinkGpioPin(UsbPinNumber)} ))
+	sd.AddButton(Dp1ButtonIndex, initImageToggleButton("monitor.jpg", func() { blinkGpioPin(Dp1PinNumber)} ))
+	sd.AddButton(AllButtonIndex, initImageToggleButton("all.jpg", func() {
 		blinkGpioPin(Dp1PinNumber)
 		blinkGpioPin(Dp2PinNumber)
 		blinkGpioPin(UsbPinNumber)
 	} ))
 
-	setSyncButton("sync-blue-on-black.jpg", "sync-blue-on-red.jpg")
+	setSyncButton(sd, "sync-blue-on-black.jpg", "sync-blue-on-red.jpg")
 
 	go handleSignals(sd)
 }
 
-func setSyncButton(noSyncImage string, syncImage string) {
+func setSyncButton(sd *streamdeck.StreamDeck, noSyncImage string, syncImage string) {
 
 	var image = noSyncImage
 	if syncState {
@@ -153,6 +159,8 @@ func setSyncButton(noSyncImage string, syncImage string) {
 	}
 	syncButton.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) {
 		syncState = !syncState
-		setSyncButton(noSyncImage, syncImage)
+		setSyncButton(sd, noSyncImage, syncImage)
 	}))
+
+	sd.AddButton(SyncButtonIndex, syncButton)
 }
