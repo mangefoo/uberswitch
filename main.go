@@ -26,11 +26,11 @@ const HttpListenAddr = ":8080"
 
 func main() {
 
-	reset := flag.Bool("reset", false, "Reset the Stream Deck")
+	reset := flag.Bool("r", false, "Reset the Stream Deck")
 	flag.Parse()
 
 	if *reset {
-		fmt.Print("Resetting Stream Deck")
+		fmt.Println("Resetting Stream Deck")
 		resetStreamdeck()
 	} else {
 		initGpio()
