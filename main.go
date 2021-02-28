@@ -159,7 +159,7 @@ func initStreamdeck() {
 
 	initImageToggleButton(sd, Dp2ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { blinkGpioPin(Dp2PinNumber)} )
 	initImageToggleButton(sd, Dp1ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { blinkGpioPin(Dp1PinNumber)} )
-	initImageToggleButton(sd, UsbButtonIndex, []string{"keyboard.jpg"}, func() { blinkGpioPin(UsbPinNumber)} )
+	initImageToggleButton(sd, UsbButtonIndex, []string{"keyboard-apple.jpg", "keyboard-linux.jpg"}, func() { blinkGpioPin(UsbPinNumber)} )
 	initImageToggleButton(sd, AllButtonIndex, []string{"all.jpg"}, func() {
 		blinkGpioPin(Dp1PinNumber)
 		blinkGpioPin(Dp2PinNumber)
