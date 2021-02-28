@@ -59,12 +59,14 @@ func main() {
 			sd = initStreamdeck()
 		}
 
-		initMotionSensor(func(presence bool) {
+		initMotionSensor(func(presence bool, lastPresence bool) {
 			println("Presence:", presence)
 
 			if sd != nil {
 				if !presence {
-					clearStreamDeck(sd)
+					clearStreamDeckButtons(sd)
+				} else if !lastPresence {
+					initStreamDeckButtons(sd)
 				}
 			}
 		})
@@ -103,12 +105,12 @@ func handleSignals(sd *streamdeck.StreamDeck) {
 
 	<-c
 
-	clearStreamDeck(sd)
+	clearStreamDeckButtons(sd)
 
 	os.Exit(0)
 }
 
-func clearStreamDeck(sd *streamdeck.StreamDeck) {
+func clearStreamDeckButtons(sd *streamdeck.StreamDeck) {
 	blackButton := buttons.NewColourButton(color.Black)
 	for i := 0; i < 6; i++ {
 		sd.AddButton(i, blackButton)
@@ -200,6 +202,14 @@ func initStreamdeck() *streamdeck.StreamDeck {
 
 	fmt.Printf("Found device [%s]\n", sd.GetName())
 
+	initStreamDeckButtons(sd)
+
+	go handleSignals(sd)
+
+	return sd
+}
+
+func initStreamDeckButtons(sd *streamdeck.StreamDeck) {
 	initImageToggleButton(sd, Dp2ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { go blinkGpioPin(Dp2PinNumber) })
 	initImageToggleButton(sd, Dp1ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { go blinkGpioPin(Dp1PinNumber) })
 	initImageToggleButton(sd, UsbButtonIndex, []string{"keyboard-apple.jpg", "keyboard-linux.jpg"}, func() { go blinkGpioPin(UsbPinNumber) })
@@ -210,10 +220,6 @@ func initStreamdeck() *streamdeck.StreamDeck {
 	})
 
 	setSyncButton(sd, "sync-blue-on-black.jpg", "sync-blue-on-red.jpg")
-
-	go handleSignals(sd)
-
-	return sd
 }
 
 func setSyncButton(sd *streamdeck.StreamDeck, noSyncImage string, syncImage string) {
@@ -235,7 +241,7 @@ func setSyncButton(sd *streamdeck.StreamDeck, noSyncImage string, syncImage stri
 	sd.AddButton(SyncButtonIndex, syncButton)
 }
 
-func initMotionSensor(function func(bool)) {
+func initMotionSensor(function func(bool, bool)) {
 
 	if config.PhilipsHueSensorUrl != "" {
 		go pollMotionSensor(function)
@@ -251,8 +257,9 @@ type PhilipHueResponse struct {
 	State PhilipHueState
 }
 
-func pollMotionSensor(function func(bool)) {
+func pollMotionSensor(function func(bool, bool)) {
 
+	var lastPresence = false
 	for {
 		println("Polling Philips Hue from", config.PhilipsHueSensorUrl)
 		response, err := http.Get(config.PhilipsHueSensorUrl)
@@ -264,7 +271,8 @@ func pollMotionSensor(function func(bool)) {
 			hueResponse := new(PhilipHueResponse)
 			json.NewDecoder(response.Body).Decode(hueResponse)
 
-			function(hueResponse.State.Presence)
+			function(hueResponse.State.Presence, lastPresence)
+			lastPresence = hueResponse.State.Presence
 		}
 
 		time.Sleep(10 * time.Second)
