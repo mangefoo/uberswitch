@@ -35,6 +35,7 @@ var syncState = false
 
 type Config struct {
 	PhilipsHueSensorUrl string
+	MotionSensorThresholdSecs int
 }
 
 var config Config
@@ -59,14 +60,14 @@ func main() {
 			sd = initStreamdeck()
 		}
 
-		initMotionSensor(func(presence bool, lastPresence bool) {
+		initMotionSensor(func(presence bool) {
 			println("Presence:", presence)
 
 			if sd != nil {
-				if !presence {
-					clearStreamDeckButtons(sd)
-				} else if !lastPresence {
+				if presence {
 					initStreamDeckButtons(sd)
+				} else {
+					clearStreamDeckButtons(sd)
 				}
 			}
 		})
@@ -241,7 +242,7 @@ func setSyncButton(sd *streamdeck.StreamDeck, noSyncImage string, syncImage stri
 	sd.AddButton(SyncButtonIndex, syncButton)
 }
 
-func initMotionSensor(function func(bool, bool)) {
+func initMotionSensor(function func(bool)) {
 
 	if config.PhilipsHueSensorUrl != "" {
 		go pollMotionSensor(function)
@@ -257,9 +258,12 @@ type PhilipHueResponse struct {
 	State PhilipHueState
 }
 
-func pollMotionSensor(function func(bool, bool)) {
+func pollMotionSensor(function func(bool)) {
 
 	var lastPresence = false
+	var lastPresenceToFalseChange = time.Now()
+	var presenceFalseSent = false
+
 	for {
 		println("Polling Philips Hue from", config.PhilipsHueSensorUrl)
 		response, err := http.Get(config.PhilipsHueSensorUrl)
@@ -271,7 +275,19 @@ func pollMotionSensor(function func(bool, bool)) {
 			hueResponse := new(PhilipHueResponse)
 			json.NewDecoder(response.Body).Decode(hueResponse)
 
-			function(hueResponse.State.Presence, lastPresence)
+			now := time.Now()
+
+			if lastPresence && !hueResponse.State.Presence {
+				lastPresenceToFalseChange = time.Now()
+				presenceFalseSent = false
+			} else if !hueResponse.State.Presence && !lastPresence && !presenceFalseSent && now.Sub(lastPresenceToFalseChange) > time.Second * time.Duration(config.MotionSensorThresholdSecs) {
+				function(false)
+				presenceFalseSent = true
+			} else if !lastPresence && hueResponse.State.Presence && presenceFalseSent {
+				function(true)
+				presenceFalseSent = false
+			}
+
 			lastPresence = hueResponse.State.Presence
 		}
 
