@@ -290,6 +290,7 @@ func pollMotionSensor(function func(bool)) {
 
 			lastPresence = hueResponse.State.Presence
 		}
+		response.Body.Close()
 
 		time.Sleep(10 * time.Second)
 	}
