@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/magicmonkey/go-streamdeck/actionhandlers"
@@ -32,21 +33,62 @@ const AllButtonIndex = 4
 
 var syncState = false
 
+type Config struct {
+	PhilipsHueSensorUrl string
+	MotionSensorThresholdSecs int
+}
+
+var config Config
+
 func main() {
 
 	reset := flag.Bool("r", false, "Reset the Stream Deck")
 	noHardware := flag.Bool("n", false, "Run without Stream Deck and GPIO support")
+	configPath := flag.String("c", "config.json", "Path to configuration file")
 	flag.Parse()
+
+	initConfig(*configPath)
 
 	if *reset {
 		fmt.Println("Resetting Stream Deck")
 		resetStreamdeck()
 	} else {
+		var sd *streamdeck.StreamDeck
+
 		if !*noHardware {
 			initGpio()
-			initStreamdeck()
+			sd = initStreamdeck()
 		}
+
+		initMotionSensor(func(presence bool) {
+			if sd != nil {
+				if presence {
+					println("Turning display on")
+					initStreamDeckButtons(sd)
+				} else {
+					println("Turning display off")
+					clearStreamDeckButtons(sd, func() { initStreamDeckButtons(sd) })
+				}
+			}
+		})
 		httpServer()
+	}
+}
+
+func initConfig(configPath string) {
+
+	file, err := os.Open(configPath)
+	if err != nil {
+		panic(err)
+	}
+
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	config = Config{}
+	err = decoder.Decode(&config)
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -59,17 +101,22 @@ func resetStreamdeck() {
 }
 
 func handleSignals(sd *streamdeck.StreamDeck) {
-    c := make(chan os.Signal, 1)
-    signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGTERM)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-    <-c
+	<-c
 
-    blackButton := buttons.NewColourButton(color.Black)
-    for i := 0; i < 6; i++ {
+	clearStreamDeckButtons(sd, func() {})
+
+	os.Exit(0)
+}
+
+func clearStreamDeckButtons(sd *streamdeck.StreamDeck, pressFunction func()) {
+	blackButton := buttons.NewColourButton(color.Black)
+	blackButton.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) { pressFunction() }))
+	for i := 0; i < 6; i++ {
 		sd.AddButton(i, blackButton)
 	}
-
-    os.Exit(0)
 }
 
 func httpServer() {
@@ -79,9 +126,9 @@ func httpServer() {
 	http.HandleFunc("/dp1", blinkPinFunction(Dp1PinNumber))
 	http.HandleFunc("/dp2", blinkPinFunction(Dp2PinNumber))
 
-    if err := http.ListenAndServe(HttpListenAddr, nil); err != nil {
-        log.Fatal(err)
-    }
+	if err := http.ListenAndServe(HttpListenAddr, nil); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func blinkPinFunction(pin int) func(http.ResponseWriter, *http.Request) {
@@ -116,7 +163,7 @@ func imagePath(image string) string {
 
 func initImageToggleButton(sd *streamdeck.StreamDeck, buttonIndex int, images []string, function func()) {
 
-	buttonState := ButtonState{ buttonIndex, images, 0 }
+	buttonState := ButtonState{buttonIndex, images, 0}
 
 	setImageToggleButton(sd, buttonState, function)
 }
@@ -145,11 +192,11 @@ func setImageToggleButton(sd *streamdeck.StreamDeck, buttonState ButtonState, fu
 
 type ButtonState struct {
 	buttonIndex int
-	images []string
-	imageIndex int
+	images      []string
+	imageIndex  int
 }
 
-func initStreamdeck() {
+func initStreamdeck() *streamdeck.StreamDeck {
 	sd, err := streamdeck.New()
 	if err != nil {
 		panic(err)
@@ -157,9 +204,17 @@ func initStreamdeck() {
 
 	fmt.Printf("Found device [%s]\n", sd.GetName())
 
-	initImageToggleButton(sd, Dp2ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { go blinkGpioPin(Dp2PinNumber)} )
-	initImageToggleButton(sd, Dp1ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { go blinkGpioPin(Dp1PinNumber)} )
-	initImageToggleButton(sd, UsbButtonIndex, []string{"keyboard-apple.jpg", "keyboard-linux.jpg"}, func() { go blinkGpioPin(UsbPinNumber)} )
+	initStreamDeckButtons(sd)
+
+	go handleSignals(sd)
+
+	return sd
+}
+
+func initStreamDeckButtons(sd *streamdeck.StreamDeck) {
+	initImageToggleButton(sd, Dp2ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { go blinkGpioPin(Dp2PinNumber) })
+	initImageToggleButton(sd, Dp1ButtonIndex, []string{"monitor-apple.jpg", "monitor-linux.jpg"}, func() { go blinkGpioPin(Dp1PinNumber) })
+	initImageToggleButton(sd, UsbButtonIndex, []string{"keyboard-apple.jpg", "keyboard-linux.jpg"}, func() { go blinkGpioPin(UsbPinNumber) })
 	initImageToggleButton(sd, AllButtonIndex, []string{"all.jpg"}, func() {
 		sd.GetButtonIndex(Dp1ButtonIndex).Pressed()
 		sd.GetButtonIndex(Dp2ButtonIndex).Pressed()
@@ -167,8 +222,6 @@ func initStreamdeck() {
 	})
 
 	setSyncButton(sd, "sync-blue-on-black.jpg", "sync-blue-on-red.jpg")
-
-	go handleSignals(sd)
 }
 
 func setSyncButton(sd *streamdeck.StreamDeck, noSyncImage string, syncImage string) {
@@ -188,4 +241,57 @@ func setSyncButton(sd *streamdeck.StreamDeck, noSyncImage string, syncImage stri
 	}))
 
 	sd.AddButton(SyncButtonIndex, syncButton)
+}
+
+func initMotionSensor(function func(bool)) {
+
+	if config.PhilipsHueSensorUrl != "" {
+		go pollMotionSensor(function)
+	}
+}
+
+type PhilipHueState struct {
+	Presence    bool
+	Lastupdated string
+}
+
+type PhilipsHueResponse struct {
+	State PhilipHueState
+}
+
+func pollMotionSensor(function func(bool)) {
+
+	var lastPresence = false
+	var lastPresenceToFalseChange = time.Now()
+	var presenceFalseSent = false
+
+	for {
+		response, err := http.Get(config.PhilipsHueSensorUrl)
+		if err != nil {
+			fmt.Println(err)
+		} else if response.StatusCode != 200 {
+			fmt.Println("Unexpected response:", response.StatusCode, response.Status)
+		} else {
+			hueResponse := new(PhilipsHueResponse)
+			json.NewDecoder(response.Body).Decode(hueResponse)
+
+			now := time.Now()
+
+			if lastPresence && !hueResponse.State.Presence {
+				lastPresenceToFalseChange = time.Now()
+				presenceFalseSent = false
+			} else if !hueResponse.State.Presence && !lastPresence && !presenceFalseSent && now.Sub(lastPresenceToFalseChange) > time.Second * time.Duration(config.MotionSensorThresholdSecs) {
+				function(false)
+				presenceFalseSent = true
+			} else if !lastPresence && hueResponse.State.Presence && presenceFalseSent {
+				function(true)
+				presenceFalseSent = false
+			}
+
+			lastPresence = hueResponse.State.Presence
+		}
+		response.Body.Close()
+
+		time.Sleep(10 * time.Second)
+	}
 }
