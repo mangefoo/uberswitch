@@ -29,7 +29,8 @@ type persistedState struct {
 func RestoreButtonState(statePath string) {
     file, err := os.Open(statePath)
     if err != nil {
-        panic(err)
+    	log.Printf("Failed to restore state: %+v", err)
+    	return
     }
     defer file.Close()
 
