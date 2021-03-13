@@ -130,7 +130,7 @@ func getSwitchFunction(sw Switch) func() {
     case "toggle":
         return func() {
             log.Print("Toggle pin ", sw.GPIOPin)
-            if syncState {
+            if !syncState {
                 blinkGpioPin(sw.GPIOPin)
             }
             toggleImageButton(sw)
@@ -278,24 +278,7 @@ func filterSwitches(switches []Switch, test func(Switch) bool) (ret []Switch) {
 func initStreamDeckButtons() {
 
 	for _, sw := range config.Switches {
-		switch sw.Type {
-        case "toggle":
-            initImageToggleButton(sw.ButtonIndex, sw.Images, getSwitchFunction(sw))
-        case "toggleAll":
-            allToggleSwitches := filterSwitches(config.Switches, func(s Switch) bool {
-                return s.Type == "toggle"
-            })
-
-            initImageToggleButton(sw.ButtonIndex, sw.Images, func() {
-            	for _, toggleSwitch := range allToggleSwitches {
-            		sd.GetButtonIndex(toggleSwitch.ButtonIndex).Pressed()
-                }
-            })
-        case "sync":
-            initImageToggleButton(sw.ButtonIndex, sw.Images, func() {
-                syncState = !syncState
-            })
-        }
+        initImageToggleButton(sw.ButtonIndex, sw.Images, getSwitchFunction(sw))
     }
 
     go handleSignals()
