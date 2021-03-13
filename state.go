@@ -39,7 +39,6 @@ func RestoreButtonState(statePath string) {
     err = decoder.Decode(&persistedState)
     if err != nil {
         log.Fatalf("Failed to parse state file: %+v", err)
-        panic(err)
     }
 
     tmpStates := make(map[int]*ButtonState)
@@ -70,7 +69,10 @@ func PersistButtonState(statePath string) {
         return
     }
 
-    ioutil.WriteFile(statePath, bytes, 0644)
+    err = ioutil.WriteFile(statePath, bytes, 0644)
+    if err != nil {
+        log.Printf("Failed to persist state: %+v", err)
+    }
 }
 
 func GetButtonState(buttonIndex int, init func() ButtonState) *ButtonState {
