@@ -62,7 +62,7 @@ func main() {
     } else {
         if !*noHardware {
             initGpio()
-            sd = initStreamdeck()
+            initStreamdeck()
         }
 
         initMotionSensor(func(presence bool) {
@@ -250,19 +250,19 @@ func setImageToggleButton(buttonState *ButtonState, function func()) {
     sd.AddButton(buttonState.buttonIndex, button)
 }
 
-func initStreamdeck() *streamdeck.StreamDeck {
-    sd, err := streamdeck.New()
+func initStreamdeck() {
+    newSd, err := streamdeck.New()
     if err != nil {
         panic(err)
     }
+
+    sd = newSd
 
     log.Printf("Found device [%s]\n", sd.GetName())
 
     initStreamDeckButtons()
 
     go handleSignals()
-
-    return sd
 }
 
 func filterSwitches(switches []Switch, test func(Switch) bool) (ret []Switch) {
