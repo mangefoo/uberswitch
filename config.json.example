@@ -1,4 +1,40 @@
 {
+  "switches": [
+    {
+      "name": "dp1",
+      "type": "toggle",
+      "buttonIndex": 3,
+      "GPIOPin": 22,
+      "images": [ "monitor-apple.jpg", "monitor-linux.jpg" ]
+    },
+    {
+      "name": "dp2",
+      "type": "toggle",
+      "buttonIndex": 0,
+      "GPIOPin": 23,
+      "images": [ "monitor-apple.jpg", "monitor-linux.jpg" ]
+    },
+    {
+      "name": "usb1",
+      "type": "toggle",
+      "buttonIndex": 1,
+      "GPIOPin": 24,
+      "images": [ "keyboard-apple.jpg", "keyboard-linux.jpg" ]
+    },
+    {
+      "name": "all",
+      "type": "toggleAll",
+      "buttonIndex": 4,
+      "images": [ "all.jpg" ]
+    },
+    {
+      "name": "sync",
+      "type": "sync",
+      "buttonIndex": 2,
+      "images": [ "sync-blue-on-black.jpg", "sync-blue-on-red.jpg" ]
+    }
+  ],
+
   "philipsHueSensorUrl": "http://127.0.0.1/api/<APIKEY>/sensors/19",
   "motionSensorThresholdSecs": 600
 }
