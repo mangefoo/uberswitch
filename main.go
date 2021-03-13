@@ -143,17 +143,19 @@ func getSwitchFunction(sw Switch) func() {
         })
 
         return func() {
-            println("Toggling all pins", sw.GPIOPin)
+            log.Println("Toggling all pins")
             if !syncState {
                 for _, toggleSwitch := range toggleSwitches {
-                    log.Print("Toggling pin", sw.GPIOPin)
+                    log.Print("Toggling pin ", toggleSwitch.GPIOPin)
                     blinkGpioPin(toggleSwitch.GPIOPin)
+                    toggleImageButton(toggleSwitch)
                 }
             }
             toggleImageButton(sw)
         }
-    case "syncButton":
+    case "sync":
     	return func() {
+    	    log.Print("Toggling sync state")
     	    syncState = !syncState
     	    toggleImageButton(sw)
     	}
