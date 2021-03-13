@@ -168,7 +168,8 @@ func httpServer() {
         log.Printf("Configuring %s for switch %+v", endpoint, sw)
         handler := getSwitchFunction(sw)
     	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
-    		handler()
+            log.Printf("Actionhandler for %s triggered", endpoint)
+            handler()
             w.WriteHeader(201)
         })
     }
@@ -238,8 +239,9 @@ func setImageToggleButton(buttonState *ButtonState, function func()) {
         panic(err)
     }
 
-    button.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) {
-    	function()
+    button.SetActionHandler(actionhandlers.NewCustomAction(func(button streamdeck.Button) {
+        log.Printf("Action handler for %+v triggered", button)
+        function()
     }))
 
     sd.AddButton(buttonState.buttonIndex, button)
