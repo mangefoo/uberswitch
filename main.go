@@ -10,6 +10,7 @@ import (
     "net/http"
     "os"
     "os/signal"
+    "sync"
     "syscall"
     "time"
 
@@ -44,6 +45,7 @@ var config Config
 var statePath *string
 var noHardware *bool
 var sd *streamdeck.StreamDeck
+var toggleMutex sync.Mutex
 
 func main() {
 
@@ -169,6 +171,8 @@ func httpServer() {
         handler := getSwitchFunction(sw)
     	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
             log.Printf("Actionhandler for %s triggered", endpoint)
+            toggleMutex.Lock()
+            defer toggleMutex.Unlock()
             handler()
             w.WriteHeader(201)
         })
