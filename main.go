@@ -153,6 +153,7 @@ func getSwitchFunction(sw Switch) func() {
     case "syncButton":
     	return func() {
     	    syncState = !syncState
+    	    toggleImageButton(sw)
     	}
     default:
     	return func() {}
@@ -205,12 +206,12 @@ func imagePath(image string) string {
     return fmt.Sprintf("%s/%s", ImageDir, image)
 }
 
-func initImageToggleButton(buttonIndex int, images []string, function func()) {
-    buttonState := GetButtonState(buttonIndex, func() ButtonState {
-        return ButtonState{buttonIndex, images, 0}
+func initImageToggleButton(sw Switch) {
+    buttonState := GetButtonState(sw.ButtonIndex, func() ButtonState {
+        return ButtonState{sw.ButtonIndex, sw.Images, 0}
     })
 
-    setImageToggleButton(buttonState, function)
+    setImageToggleButton(buttonState, getSwitchFunction(sw))
 }
 
 func toggleImageButton(sw Switch) {
@@ -238,13 +239,7 @@ func setImageToggleButton(buttonState *ButtonState, function func()) {
     }
 
     button.SetActionHandler(actionhandlers.NewCustomAction(func(streamdeck.Button) {
-        (*buttonState).imageIndex++
-        if buttonState.imageIndex >= len(buttonState.images) {
-            (*buttonState).imageIndex = 0
-        }
-        PersistButtonState(*statePath)
-
-        setImageToggleButton(buttonState, function)
+    	function()
     }))
 
     sd.AddButton(buttonState.buttonIndex, button)
@@ -278,7 +273,7 @@ func filterSwitches(switches []Switch, test func(Switch) bool) (ret []Switch) {
 func initStreamDeckButtons() {
 
 	for _, sw := range config.Switches {
-        initImageToggleButton(sw.ButtonIndex, sw.Images, getSwitchFunction(sw))
+        initImageToggleButton(sw)
     }
 
     go handleSignals()
