@@ -85,3 +85,12 @@ func GetButtonState(buttonIndex int, init func() ButtonState) *ButtonState {
 
     return &state
 }
+
+func GetButtonStateOrPanic(buttonIndex int) *ButtonState {
+    if state, ok := states[buttonIndex]; ok {
+    	return state
+    }
+
+    log.Panicf("Couldn't find button with index %d", buttonIndex)
+    return nil
+}
