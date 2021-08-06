@@ -44,9 +44,9 @@ type Config struct {
 }
 
 type SensorReport struct {
-	Reporter string
-	Topic string
-	Sensors map[string]string
+	Reporter string `json:"reporter"`
+	Topic string `json:"topic"`
+	Sensors map[string]string `json:"sensors"`
 }
 
 var config Config
