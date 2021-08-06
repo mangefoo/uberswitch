@@ -1,7 +1,8 @@
 package main
 
 import (
-    "encoding/json"
+	"bytes"
+	"encoding/json"
     "flag"
     "fmt"
     "github.com/magicmonkey/go-streamdeck/actionhandlers"
@@ -36,9 +37,16 @@ type Switch struct {
 }
 
 type Config struct {
-    PhilipsHueSensorUrl       string
+    PhilipsHueSensorUrl string
     MotionSensorThresholdSecs int
     Switches []Switch
+	SensorRelayUrl string
+}
+
+type SensorReport struct {
+	Reporter string
+	Topic string
+	Sensors map[string]string
 }
 
 var config Config
@@ -159,9 +167,33 @@ func getSwitchFunction(sw Switch) func() {
     	    syncState = !syncState
     	    toggleImageButton(sw)
     	}
+	case "sensorpanelToggle":
+		return func() {
+			go sendSensorPanelToggle()
+		}
     default:
     	return func() {}
     }
+}
+
+func sendSensorPanelToggle() {
+	report := SensorReport {
+		Reporter: "uberswitch",
+		Topic: "actions",
+		Sensors: map[string]string{ "toggle_screen": "1"},
+	}
+
+	requestBody, err := json.Marshal(report)
+	if err != nil {
+		log.Printf("Failed to create sensor report: %+v", err)
+	} else {
+		resp, err := http.Post(config.SensorRelayUrl, "application/json", bytes.NewReader(requestBody))
+		if err != nil {
+			log.Printf("Failed to send sensor report: %+v", err)
+		} else if resp.StatusCode != http.StatusOK {
+			log.Printf("Failed to send sensor report: %+v", resp)
+		}
+	}
 }
 
 func httpServer() {

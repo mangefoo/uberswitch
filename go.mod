@@ -1,6 +1,6 @@
 module mindphaser.se/uberswitch
 
-go 1.13
+go 1.15
 
 require (
 	github.com/magicmonkey/go-streamdeck v0.0.5-0.20210123142810-01c934d64049
