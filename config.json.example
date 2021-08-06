@@ -32,9 +32,16 @@
       "type": "sync",
       "buttonIndex": 2,
       "images": [ "sync-blue-on-black.jpg", "sync-blue-on-red.jpg" ]
+    },
+    {
+      "name": "sensorpanel",
+      "type": "sensorpanelToggle",
+      "buttonIndex": 5,
+      "images": [ "sync-blue-on-black.jpg", "sync-blue-on-red.jpg" ]
     }
   ],
 
   "philipsHueSensorUrl": "http://127.0.0.1/api/<APIKEY>/sensors/19",
-  "motionSensorThresholdSecs": 600
+  "motionSensorThresholdSecs": 600,
+  "sensorRelayUrl": "http://127.0.0.1/sensor-relay/publish"
 }
